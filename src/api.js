@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://investment-advisor-backend-1p35.onrender.com';
 
 // export — 让这个function能被别的文件import进去用。你之前写的组件都用export default XXX，
 // 这次不太一样，用的是export（没有default），这叫具名导出（named export）。
