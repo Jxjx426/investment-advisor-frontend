@@ -35,7 +35,7 @@ function PortfolioSummary({ portfolio, onHoldingDeleted }) {
               <span className="holding-symbol">{h.symbol}</span>
               <span className="holding-detail">
                 - 数量: {h.quantity}, 
-                平均买入价:{' '} {h.avgBuyPrice != null? `${h.avgBuyPrice.toFixed(2)}}` : '暂无资料'}, 
+                平均买入价:{' '} {h.avgBuyPrice != null? `${h.avgBuyPrice.toFixed(2)}` : '暂无资料'}, 
                 现价:{' '}  {h.currentPrice != null ? `$${h.currentPrice.toFixed(2)}` : '暂无报价'}
               </span>
               {h.gainLoss != null ? (
