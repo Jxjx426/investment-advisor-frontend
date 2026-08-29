@@ -34,12 +34,17 @@ function PortfolioSummary({ portfolio, onHoldingDeleted }) {
               {/* React要求你在"列表渲染"时，每个项目要给一个独一无二的key，方便它追踪哪个元素改变了。*/}
               <span className="holding-symbol">{h.symbol}</span>
               <span className="holding-detail">
-                - 数量: {h.quantity}, 平均买入价: {h.avgBuyPrice.toFixed(2)},
-                现价: ${h.currentPrice.toFixed(2)}, 
+                - 数量: {h.quantity}, 
+                平均买入价:{' '} {h.avgBuyPrice != null? `${h.avgBuyPrice.toFixed(2)}}` : '暂无资料'}, 
+                现价:{' '}  {h.currentPrice != null ? `$${h.currentPrice.toFixed(2)}` : '暂无报价'}
               </span>
-              <span className={h.gainLoss >= 0 ? 'gain' : 'loss'}>
-                盈亏: ${h.gainLoss.toFixed(2)} ({h.gainLossPercent.toFixed(2)}%)
-              </span>
+              {h.gainLoss != null ? (
+                <span className={h.gainLoss >= 0 ? 'gain' : 'loss'}>
+                    盈亏: ${h.gainLoss.toFixed(2)} ({h.gainLossPercent.toFixed(2)}%)
+                  </span>
+                ) : (
+                  <span className="holding-detail">盈亏: 暂无资料</span>
+              )}
             </div>
             <div className="holding-actions">
               <button onClick={() => setPendingDelete({ id: h.id, symbol: h.symbol })}>删除</button>
