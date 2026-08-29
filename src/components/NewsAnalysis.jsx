@@ -29,6 +29,7 @@ function NewsAnalysis() {
     }
     setLoading(true);
     setAnalysis(null);
+    setError('');
     try {
       const res = await apiFetch(`/news/${targetSymbol}/analysis`);
       const data = await res.json();
