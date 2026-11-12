@@ -1,78 +1,80 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { apiFetch } from '../api';
-
-function LoginPage({ onLoginSuccess }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    const res = await apiFetch('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-
-    if (data.error) {
-      setError(data.error);
-      return;
+import { useState } from "react";
+import { request } from "../api";
+export default function LoginPage({ onLoginSuccess }) {
+  const [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const data = await request("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      localStorage.setItem("token", data.token);
+      onLoginSuccess();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setBusy(false);
     }
-
-    localStorage.setItem('token', data.token);
-    onLoginSuccess();
-    navigate('/');
-  };
-
+  }
   return (
-    <div className="auth-page">
-      <form onSubmit={handleSubmit} className="auth-form">
-        <h2>欢迎回来</h2>
-        <p className="auth-subtitle">登入查看你的投资组合</p>
-
-        {error && <p className="form-error">{error}</p>}
-
-        <label className="auth-label">Email</label>
-        <input
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <label className="auth-label">密码</label>
-        <div className="password-field">
+    <main className="login">
+      <div className="login-intro">
+        <span className="brand-mark">m.</span>
+        <p className="eyebrow">MY INVESTMENT TRACKER</p>
+        <h1>
+          Your money.
+          <br />A clearer picture.
+        </h1>
+        <p>
+          Two portfolios, one place to keep track.
+          <br />
+          Built for you and your father.
+        </p>
+      </div>
+      <form className="login-form" onSubmit={submit}>
+        <p className="eyebrow">YOUR PRIVATE WORKSPACE</p>
+        <h2>Welcome back</h2>
+        <p>Sign in to your investment tracker.</p>
+        {error && (
+          <p className="notice error" role="alert">
+            {error}
+          </p>
+        )}
+        <label>
+          Email
           <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder="输入密码"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? '隐藏' : '显示'}
-          </button>
-        </div>
-
-        <button type="submit" className="auth-submit">登入</button>
-
-        <p className="auth-switch">
-          还没有帐号？ <Link to="/register">立即注册</Link>
-        </p>
+        </label>
+        <button className="primary" disabled={busy}>
+          {busy ? "Signing in…" : "Sign in →"}
+        </button>
+        <small>
+          One private account manages both portfolios.
+          <br />
+          Your session stays signed in for seven days.
+        </small>
       </form>
-    </div>
+    </main>
   );
 }
-
-export default LoginPage;

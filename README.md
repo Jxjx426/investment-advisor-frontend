@@ -1,16 +1,13 @@
-# React + Vite
+# My Investment Tracker frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Phase 1 of the existing React/Vite application rebuild. See [the backend guide](../Backend/README.md) for accounting rules, setup, current price coverage and remaining phases.
 
-Currently, two official plugins are available:
+```powershell
+npm run dev -- --host 127.0.0.1
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Start the backend separately with `npm run demo` for sample data, or `npm start` for the private configured database. Development uses `/api`, with the prefix stripped by Vite's proxy before forwarding to port 3000. Production uses `VITE_API_BASE_URL` if set, otherwise the existing Render API address. The new frontend requires the matching Phase 1 backend; it is not deployed by this task.
 
-## React Compiler
+The interface supports owner selection, open/closed holdings, fee-aware realized and unrealized P/L, MYR equity/cash estimates, cash and dividend entries, corrections and audit history, bulk entry preview and import, manual quote fallback, and history export. Research tools are preserved in source for Phase 3 reconnection.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+`npm test` checks bulk parsing, export safety, owner filtering and unavailable valuations. `npm run build` produces the Vite bundle. Browser checks covered desktop and mobile layouts, login, bulk preview and correction save/recalculation. The demo login is documented in the backend guide and never accesses real records.
