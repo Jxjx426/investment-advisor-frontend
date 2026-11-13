@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { request } from "../api";
-import { BULK_TEMPLATE, kinds, money, parseBulk, shares } from "../lib/tracker";
+import {
+  BULK_TEMPLATE,
+  ENTRY_COLUMNS,
+  kinds,
+  money,
+  parseBulk,
+  shares,
+} from "../lib/tracker";
 export default function BulkEntry({ owners, onClose, onSaved }) {
   const dialog = useRef(null);
   const fileInput = useRef(null);
@@ -26,21 +33,7 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
           rows = Array.isArray(parsed) ? parsed : parsed.transactions;
         if (!Array.isArray(rows) || rows.length > 500)
           throw new Error("The JSON file must contain up to 500 transactions.");
-        const fields = [
-          "owner",
-          "date",
-          "type",
-          "market",
-          "symbol",
-          "currency",
-          "quantity",
-          "price",
-          "fee",
-          "amount",
-          "fx_rate",
-          "sequence",
-          "notes",
-        ];
+        const fields = ENTRY_COLUMNS;
         value = [
           fields.join(","),
           ...rows.map((row) =>
@@ -147,8 +140,11 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
             <summary>Format</summary>
             <p>
               Owners: mine / father. Dates: YYYY-MM-DD. Types: BUY, SELL,
-              DEPOSIT, WITHDRAWAL, DIVIDEND. Positive prices and fees. Actual FX
-              optional. Template contains sample rows.
+              DEPOSIT, WITHDRAWAL, DIVIDEND, FX, TRANSFER, SPLIT, OPENING_CASH,
+              OPENING_POSITION, TAX. Exchange: target_currency and
+              target_amount. Transfer: to_owner. Split: split_from and split_to.
+              Withholding: tax. Positive amounts and fees. Actual FX optional.
+              Template contains sample rows.
             </p>
           </details>
         </>
@@ -184,19 +180,44 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
                     <td>
                       {owners.find((o) => o.id === r.owner_id)?.name}
                       <small>{r.occurred_on}</small>
+                      {r.kind === "TRANSFER" && (
+                        <small>
+                          →{" "}
+                          {
+                            owners.find(
+                              (owner) => owner.id === r.counterparty_owner_id,
+                            )?.name
+                          }
+                        </small>
+                      )}
                     </td>
                     <td>
                       {kinds[r.kind]}
                       <small>{r.symbol || r.currency}</small>
                     </td>
-                    <td>{shares(r.quantity)}</td>
+                    <td>
+                      {r.kind === "SPLIT"
+                        ? `${shares(r.split_from)} : ${shares(r.split_to)}`
+                        : shares(r.quantity)}
+                    </td>
                     <td>
                       {money(
                         ["BUY", "SELL"].includes(r.kind) ? r.price : r.amount,
                         r.currency,
                       )}
+                      {r.kind === "FX" && (
+                        <small>
+                          → {money(r.target_amount, r.target_currency)}
+                          {r.fx_estimated ? " ≈" : ""}
+                        </small>
+                      )}
                     </td>
-                    <td>{money(r.fee, r.currency)}</td>
+                    <td>
+                      {money(r.fee, r.currency)}
+                      {Number(r.tax) > 0 && (
+                        <small>Tax {money(r.tax, r.currency)}</small>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

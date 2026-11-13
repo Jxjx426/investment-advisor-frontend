@@ -1,12 +1,14 @@
 # My Investment Tracker frontend
 
-Phase 1 of the existing React/Vite application rebuild. See [the backend guide](../Backend/README.md) for accounting rules, setup, current price coverage and remaining phases.
+Phase 2 of the existing React/Vite application rebuild. See [the backend guide](../Backend/README.md) for accounting rules, setup, current price coverage and remaining phases. Current work is on `rebuild/phase-2-records`.
+
+Phase 2 adds exchanges, owner cash transfers, explicit dividend withholding, later tax payments, splits and opening balances to the existing Add/Edit dialog. Cash -> Ledger shows both legs of exchanges and incoming owner transfers; Cash -> Reconcile compares Mine + Dad with manually entered Moomoo balances and shares. Reconciliation has its own combined scope and does not inherit the selected owner filter. Unknown broker quantities are blank; omitted holdings become zero only when the user explicitly marks the broker list complete. All new record fields round-trip through CSV and reviewed JSON imports.
 
 ```powershell
 npm run dev -- --host 127.0.0.1
 ```
 
-Start the backend separately with `npm run demo` for sample data, or `npm start` for the private configured database. Development uses `/api`, with the prefix stripped by Vite's proxy before forwarding to port 3000. Production uses `VITE_API_BASE_URL` if set, otherwise the existing Render API address. The new frontend requires the matching Phase 1 backend; it is not deployed by this task.
+Start the backend separately with `npm run demo` for sample data, or `npm start` for the private configured database. Development uses `/api`, with the prefix stripped by Vite's proxy before forwarding to port 3000. Production uses `VITE_API_BASE_URL` if set, otherwise the existing Render API address. The new frontend requires the matching Phase 2 backend; it is not deployed by this task.
 
 The interface supports owner selection, open/closed holdings, fee-aware realized and unrealized P/L, MYR equity/cash estimates, cash and dividend entries, corrections and audit history, bulk entry preview and import, manual quote fallback, and history export. Research tools are preserved in source for Phase 3 reconnection.
 

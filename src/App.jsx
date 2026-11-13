@@ -4,10 +4,20 @@ import LoginPage from "./pages/LoginPage";
 import TransactionEditor from "./components/TransactionEditor";
 import BulkEntry from "./components/BulkEntry";
 import ManualPrice from "./components/ManualPrice";
+import Reconciliation from "./components/Reconciliation";
 import Icon from "./components/Icon";
-import { exportHistory, kinds, money, shares, summarize } from "./lib/tracker";
+import {
+  exportHistory,
+  kinds,
+  money,
+  shares,
+  summarize,
+  STOCK_KINDS,
+  visibleLegs,
+} from "./lib/tracker";
 import { stockColors } from "./lib/charts";
 import "./App.css";
+import "./Phase2.css";
 
 const AllocationChart = lazy(() => import("./components/AllocationChart"));
 const ProfitChart = lazy(() => import("./components/ProfitChart"));
@@ -46,6 +56,7 @@ export default function App() {
     [filter, setFilter] = useState("");
   const [basis, setBasis] = useState(null),
     [profitKind, setProfitKind] = useState("unrealized");
+  const [cashView, setCashView] = useState("ledger");
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     setLoggedIn(false);
@@ -124,8 +135,8 @@ export default function App() {
     summary?.transactions
       .filter((row) =>
         tab === "cash"
-          ? !["BUY", "SELL"].includes(row.kind)
-          : ["BUY", "SELL"].includes(row.kind),
+          ? !STOCK_KINDS.includes(row.kind)
+          : STOCK_KINDS.includes(row.kind),
       )
       .filter(
         (row) =>
@@ -214,21 +225,23 @@ export default function App() {
             </button>
           </div>
         </div>
-        <div className="owner-switch" role="group" aria-label="Portfolio">
-          {[
-            ["mine", "Mine"],
-            ["father", "Dad"],
-            ["combined", "All"],
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              aria-pressed={owner === key}
-              onClick={() => setOwner(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {!(tab === "cash" && cashView === "reconcile") && (
+          <div className="owner-switch" role="group" aria-label="Portfolio">
+            {[
+              ["mine", "Mine"],
+              ["father", "Dad"],
+              ["combined", "All"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={owner === key}
+                onClick={() => setOwner(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {error && (
           <div className="notice error" role="alert">
             {error}
@@ -242,55 +255,56 @@ export default function App() {
         )}
         {data && (
           <>
-            {(summary.estimated ||
-              summary.incomplete ||
-              summary.stale ||
-              data.legacy_holdings_count > 0 ||
-              data.funding_snapshots?.length > 0) && (
-              <details className="data-status">
-                <summary>
-                  {[
-                    summary.estimated ? "Estimated MYR" : "",
-                    quoteCount > 0
-                      ? `${quoteCount} price${quoteCount > 1 ? "s" : ""} to review`
-                      : summary.incomplete
-                        ? "Pricing unavailable"
-                        : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ") || "Details"}
-                </summary>
-                <div>
-                  {data.funding_snapshots?.length > 0 && (
-                    <p>Capital totals supplied; deposit dates unknown.</p>
-                  )}
-                  {summary.estimated && (
-                    <p>
-                      Cash uses current FX. Historical exchanges are missing.
-                    </p>
-                  )}
-                  {data.fx?.price && (
-                    <p>
-                      USD 1 = {money(data.fx.price)} · {data.fx.status}
-                    </p>
-                  )}
-                  {summary.incomplete && (
-                    <p>
-                      Missing quotes or FX keep affected totals unavailable.
-                    </p>
-                  )}
-                  {quoteCount > 0 && (
-                    <p>Manual / stale prices are marked in Holdings.</p>
-                  )}
-                  {data.legacy_holdings_count > 0 && (
-                    <p>
-                      {data.legacy_holdings_count} old holdings need transaction
-                      entry.
-                    </p>
-                  )}
-                </div>
-              </details>
-            )}
+            {!(tab === "cash" && cashView === "reconcile") &&
+              (summary.estimated ||
+                summary.incomplete ||
+                summary.stale ||
+                data.legacy_holdings_count > 0 ||
+                data.funding_snapshots?.length > 0) && (
+                <details className="data-status">
+                  <summary>
+                    {[
+                      summary.estimated ? "Estimated MYR" : "",
+                      quoteCount > 0
+                        ? `${quoteCount} price${quoteCount > 1 ? "s" : ""} to review`
+                        : summary.incomplete
+                          ? "Pricing unavailable"
+                          : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Details"}
+                  </summary>
+                  <div>
+                    {data.funding_snapshots?.length > 0 && (
+                      <p>Capital totals supplied; deposit dates unknown.</p>
+                    )}
+                    {summary.estimated && (
+                      <p>
+                        Cash uses current FX. Historical exchanges are missing.
+                      </p>
+                    )}
+                    {data.fx?.price && (
+                      <p>
+                        USD 1 = {money(data.fx.price)} · {data.fx.status}
+                      </p>
+                    )}
+                    {summary.incomplete && (
+                      <p>
+                        Missing quotes or FX keep affected totals unavailable.
+                      </p>
+                    )}
+                    {quoteCount > 0 && (
+                      <p>Manual / stale prices are marked in Holdings.</p>
+                    )}
+                    {data.legacy_holdings_count > 0 && (
+                      <p>
+                        {data.legacy_holdings_count} old holdings need
+                        transaction entry.
+                      </p>
+                    )}
+                  </div>
+                </details>
+              )}
             {tab === "home" && (
               <>
                 <section
@@ -509,7 +523,25 @@ export default function App() {
                 </section>
               </>
             )}
-            {(tab === "trades" || tab === "cash") && (
+            {tab === "cash" && (
+              <div className="cash-subnav" role="group" aria-label="Cash view">
+                {[
+                  ["ledger", "Ledger"],
+                  ["reconcile", "Reconcile"],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    aria-pressed={cashView === key}
+                    onClick={() => setCashView(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {tab === "cash" && cashView === "reconcile" && <Reconciliation />}
+            {(tab === "trades" ||
+              (tab === "cash" && cashView === "ledger")) && (
               <>
                 {tab === "cash" && (
                   <div className="cash-grid">
@@ -536,6 +568,21 @@ export default function App() {
                                 summary.totals[currency].dividends,
                                 currency,
                               )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Transfers</dt>
+                            <dd>
+                              {money(
+                                summary.totals[currency].transfers,
+                                currency,
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Tax paid</dt>
+                            <dd>
+                              {money(summary.totals[currency].taxes, currency)}
                             </dd>
                           </div>
                         </dl>
@@ -601,30 +648,60 @@ export default function App() {
                                 </strong>
                                 <small>
                                   {tab === "cash"
-                                    ? row.symbol || row.currency
+                                    ? row.kind === "TRANSFER"
+                                      ? `${ownerLabel(data.owners, row.owner_id)} → ${ownerLabel(data.owners, row.counterparty_owner_id)}`
+                                      : row.kind === "FX"
+                                        ? `${row.currency} → ${row.target_currency}`
+                                        : row.symbol || row.currency
                                     : kinds[row.kind]}
                                 </small>
                               </td>
                               {tab === "trades" && (
                                 <td>
-                                  {shares(row.quantity)} ×{" "}
-                                  {money(row.price, row.currency)}
+                                  {row.kind === "SPLIT" ? (
+                                    `${shares(row.split_from)} : ${shares(row.split_to)}`
+                                  ) : row.kind === "OPENING_POSITION" ? (
+                                    `${shares(row.quantity)} · ${money(row.amount, row.currency)} cost`
+                                  ) : (
+                                    <>
+                                      {shares(row.quantity)} ×{" "}
+                                      {money(row.price, row.currency)}
+                                    </>
+                                  )}
                                   <small>{row.currency}</small>
                                 </td>
                               )}
                               <td className={tone(row.cash_change)}>
-                                {money(row.cash_change, row.currency)}
+                                <CashLegValue
+                                  row={row}
+                                  ownerId={
+                                    owner === "combined"
+                                      ? null
+                                      : data.owners.find(
+                                          (item) => item.owner_key === owner,
+                                        )?.id
+                                  }
+                                />
                               </td>
                               <td
                                 className={
                                   tab === "cash" ? "" : tone(row.realized_pl)
                                 }
                               >
-                                {money(
-                                  tab === "cash"
-                                    ? row.running_cash
-                                    : row.realized_pl,
-                                  row.currency,
+                                {tab === "cash" ? (
+                                  <CashLegValue
+                                    row={row}
+                                    ownerId={
+                                      owner === "combined"
+                                        ? null
+                                        : data.owners.find(
+                                            (item) => item.owner_key === owner,
+                                          )?.id
+                                    }
+                                    balance
+                                  />
+                                ) : (
+                                  money(row.realized_pl, row.currency)
                                 )}
                               </td>
                               <td>
@@ -676,6 +753,7 @@ export default function App() {
           ownerKey={owner}
           initial={editor.initial}
           defaultKind={editor.kind}
+          fx={data.fx?.price}
           onClose={() => setEditor(null)}
           onSaved={saved}
         />
@@ -707,6 +785,20 @@ function NativeValue({ totals, currencies, field }) {
         </strong>
       ))}
     </div>
+  );
+}
+function CashLegValue({ row, ownerId, balance = false }) {
+  const legs = visibleLegs(row, ownerId);
+  return legs.length ? (
+    <div className="cash-legs">
+      {legs.map((leg, index) => (
+        <span key={index} className={balance ? "" : tone(leg.cash_change)}>
+          {money(balance ? leg.running_cash : leg.cash_change, leg.currency)}
+        </span>
+      ))}
+    </div>
+  ) : (
+    "—"
   );
 }
 function Empty({ label, onAdd, onImport }) {
@@ -757,6 +849,13 @@ function AuditHistory({ audit, onClose }) {
     fx_rate: "FX",
     sequence: "Order",
     notes: "Notes",
+    tax: "Withholding",
+    counterparty_owner_id: "To owner",
+    target_currency: "Received currency",
+    target_amount: "Received amount",
+    split_from: "Old shares",
+    split_to: "New shares",
+    fx_estimated: "Estimated FX",
     voided: "Deleted",
   };
   return (

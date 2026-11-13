@@ -4,7 +4,47 @@ export const kinds = {
   DEPOSIT: "Deposit",
   WITHDRAWAL: "Withdrawal",
   DIVIDEND: "Dividend",
+  FX: "Exchange",
+  TRANSFER: "Transfer",
+  SPLIT: "Split",
+  OPENING_CASH: "Opening cash",
+  OPENING_POSITION: "Opening shares",
+  TAX: "Tax",
 };
+export const STOCK_KINDS = ["BUY", "SELL", "SPLIT", "OPENING_POSITION"];
+export const ENTRY_COLUMNS = [
+  "owner",
+  "date",
+  "type",
+  "market",
+  "symbol",
+  "currency",
+  "quantity",
+  "price",
+  "fee",
+  "amount",
+  "fx_rate",
+  "sequence",
+  "notes",
+  "to_owner",
+  "target_currency",
+  "target_amount",
+  "tax",
+  "split_from",
+  "split_to",
+  "fx_estimated",
+];
+export function visibleLegs(row, ownerId = null) {
+  const legs = row.cash_legs ?? [
+    {
+      owner_id: row.owner_id,
+      currency: row.currency,
+      cash_change: row.cash_change,
+      running_cash: row.running_cash,
+    },
+  ];
+  return legs.filter((leg) => ownerId === null || leg.owner_id === ownerId);
+}
 export const money = (value, currency = "MYR") =>
   value == null
     ? "—"
@@ -32,14 +72,20 @@ export function summarize(data, owner) {
     data.owners.find((o) => o.owner_key === owner)?.id === row.owner_id;
   const positions = data.positions.filter(selected),
     accounts = data.accounts.filter(selected),
-    transactions = data.transactions.filter(selected);
+    transactions = data.transactions.filter(
+      (row) =>
+        selected(row) ||
+        (owner !== "combined" &&
+          row.counterparty_owner_id ===
+            data.owners.find((o) => o.owner_key === owner)?.id),
+    );
   const totals = Object.fromEntries(
     ["MYR", "USD"].map((currency) => {
       const ps = positions.filter(
           (p) => p.currency === currency && Number(p.quantity) > 0,
         ),
         as = accounts.filter((a) => a.currency === currency);
-      const sum = (field) => as.reduce((s, a) => s + Number(a[field]), 0);
+      const sum = (field) => as.reduce((s, a) => s + Number(a[field] ?? 0), 0);
       const value = ps.some((p) => p.current_value == null)
         ? null
         : ps.reduce((s, p) => s + Number(p.current_value), 0);
@@ -51,6 +97,9 @@ export function summarize(data, owner) {
           contributions: sum("contributions"),
           realized: sum("realized"),
           dividends: sum("dividends"),
+          taxes: sum("taxes"),
+          transfers: sum("transfers"),
+          opening: sum("opening"),
           cost,
           value,
           unrealized: value == null ? null : value - cost,
@@ -81,7 +130,9 @@ export function summarize(data, owner) {
     value,
     contributions,
     equity: cash == null || value == null ? null : cash + value,
-    estimated: totals.USD.cash !== 0,
+    estimated:
+      accounts.some((account) => account.cash_estimated) ||
+      (data.phase !== 2 && totals.USD.cash !== 0),
     incomplete:
       positions.some(
         (p) => Number(p.quantity) > 0 && p.quote.status === "unavailable",
@@ -157,6 +208,13 @@ export function parseBulk(source, owners) {
     "fx_rate",
     "sequence",
     "notes",
+    "to_owner",
+    "target_currency",
+    "target_amount",
+    "tax",
+    "split_from",
+    "split_to",
+    "fx_estimated",
   ]);
   if (
     new Set(headers).size !== headers.length ||
@@ -173,6 +231,16 @@ export function parseBulk(source, owners) {
     const value = Object.fromEntries(headers.map((h, j) => [h, cells[j]]));
     const owner = owners.find((o) => o.owner_key === value.owner.toLowerCase());
     if (!owner) throw new Error(`Row ${i + 1}: owner must be mine or father.`);
+    const recipient = value.to_owner
+      ? owners.find((owner) => owner.owner_key === value.to_owner.toLowerCase())
+      : null;
+    if (value.to_owner && !recipient)
+      throw new Error(`Row ${i + 1}: receiving owner must be mine or father.`);
+    if (
+      value.fx_estimated &&
+      !["0", "1", "true", "false"].includes(value.fx_estimated.toLowerCase())
+    )
+      throw new Error(`Row ${i + 1}: FX estimate must be 0 or 1.`);
     return {
       ...value,
       owner_id: owner.id,
@@ -180,27 +248,18 @@ export function parseBulk(source, owners) {
       kind: value.type.toUpperCase(),
       fee: value.fee || "0",
       sequence: value.sequence || 0,
+      counterparty_owner_id: recipient?.id ?? null,
+      tax: value.tax || "0",
+      fx_estimated: ["1", "true"].includes(value.fx_estimated?.toLowerCase())
+        ? 1
+        : 0,
     };
   });
 }
 export const BULK_TEMPLATE =
   "owner,date,type,market,symbol,currency,quantity,price,fee,amount,fx_rate,sequence,notes\nmine,2026-01-01,DEPOSIT,,,MYR,,,0,5000,,0,Example only - replace with your records\nmine,2026-01-02,BUY,US,AAPL,USD,1,200,1,,,0,Example only";
 export function exportHistory(rows, owners) {
-  const headers = [
-    "owner",
-    "date",
-    "type",
-    "market",
-    "symbol",
-    "currency",
-    "quantity",
-    "price",
-    "fee",
-    "amount",
-    "fx_rate",
-    "sequence",
-    "notes",
-  ];
+  const headers = ENTRY_COLUMNS;
   const cell = (value) =>
     `"${String(value ?? "")
       .replace(/^[=+@-]/, "'$&")
@@ -222,6 +281,13 @@ export function exportHistory(rows, owners) {
         r.fx_rate,
         r.sequence,
         r.notes,
+        owners.find((owner) => owner.id === r.counterparty_owner_id)?.owner_key,
+        r.target_currency,
+        r.target_amount,
+        r.tax,
+        r.split_from,
+        r.split_to,
+        r.fx_estimated ?? 0,
       ]
         .map(cell)
         .join(","),
