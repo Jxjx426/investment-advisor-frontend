@@ -8,7 +8,9 @@ Phase 2 adds exchanges, owner cash transfers, explicit dividend withholding, lat
 npm run dev -- --host 127.0.0.1
 ```
 
-Start the backend separately with `npm run demo` for sample data, or `npm start` for the private configured database. Development uses `/api`, with the prefix stripped by Vite's proxy before forwarding to port 3000. Production uses `VITE_API_BASE_URL` if set, otherwise the existing Render API address. The new frontend requires the matching Phase 2 backend; it is not deployed by this task.
+For your imported records, run `npm run preview` from `C:\Investment-advisor\Backend`; it starts the private local backend and the development page at http://127.0.0.1:5173. Keep that terminal running.
+
+To view the production build locally, run `npm run preview` in the frontend as well, then open http://localhost:4173. This command rebuilds first so it cannot silently serve an old bundle. It still needs the local backend on port 3000. Both development and local preview send `/api` to that backend; Vercel uses the `/api` rewrite in `vercel.json` to reach Render. `VITE_API_BASE_URL` can explicitly override this before building. Local and cloud accounts are separate. The rebuilt application has not been deployed by this task.
 
 The interface supports owner selection, open/closed holdings, fee-aware realized and unrealized P/L, MYR equity/cash estimates, cash and dividend entries, corrections and audit history, bulk entry preview and import, manual quote fallback, and history export. Research tools are preserved in source for Phase 3 reconnection.
 

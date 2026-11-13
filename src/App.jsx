@@ -21,6 +21,7 @@ import "./Phase2.css";
 
 const AllocationChart = lazy(() => import("./components/AllocationChart"));
 const ProfitChart = lazy(() => import("./components/ProfitChart"));
+const Research = lazy(() => import("./components/Research"));
 
 const tabs = [
   ["home", "Home"],
@@ -118,6 +119,15 @@ export default function App() {
       setError(error.message);
     }
   }
+  async function backup() {
+    try {
+      const archive = await request("/backup");
+      const url = URL.createObjectURL(new Blob([JSON.stringify(archive, null, 2)], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = url; link.download = `investments-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { setError(error.message); }
+  }
   if (!loggedIn) return <LoginPage onLoginSuccess={() => setLoggedIn(true)} />;
   const summary = data ? summarize(data, owner) : null;
   const colors = stockColors(data?.positions || []);
@@ -177,6 +187,7 @@ export default function App() {
           ))}
         </nav>
         <div className="header-actions">
+          <button className="icon-button" aria-label="Download records backup" title="Download records backup" onClick={backup}><Icon name="download" /></button>
           {data?.is_local && <span className="demo-badge">Local</span>}
           {data?.is_demo && (
             <span
@@ -203,7 +214,7 @@ export default function App() {
               ? "Overview"
               : tabs.find((item) => item[0] === tab)?.[1]}
           </h1>
-          <div className="heading-actions">
+          {tab !== "research" && <div className="heading-actions">
             <button
               className="icon-button"
               aria-label="Refresh"
@@ -223,7 +234,7 @@ export default function App() {
               <Icon name="add" />
               Add
             </button>
-          </div>
+          </div>}
         </div>
         {!(tab === "cash" && cashView === "reconcile") && (
           <div className="owner-switch" role="group" aria-label="Portfolio">
@@ -255,7 +266,7 @@ export default function App() {
         )}
         {data && (
           <>
-            {!(tab === "cash" && cashView === "reconcile") &&
+            {tab !== "research" && !(tab === "cash" && cashView === "reconcile") &&
               (summary.estimated ||
                 summary.incomplete ||
                 summary.stale ||
@@ -742,7 +753,7 @@ export default function App() {
               </>
             )}
             {tab === "research" && (
-              <div className="empty-state">Coming later.</div>
+              <Suspense fallback={<div className="empty-state">Loading…</div>}><Research positions={summary.positions} /></Suspense>
             )}
           </>
         )}

@@ -8,12 +8,17 @@ export default function LoginPage({ onLoginSuccess }) {
     [busy, setBusy] = useState(false);
   async function submit(event) {
     event.preventDefault();
+    const values = new FormData(event.currentTarget);
+    const credentials = {
+      email: String(values.get('email') || '').trim(),
+      password: String(values.get('password') || ''),
+    };
     setBusy(true);
     setError("");
     try {
       const data = await request("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(credentials),
       });
       localStorage.setItem("token", data.token);
       onLoginSuccess();
@@ -39,7 +44,11 @@ export default function LoginPage({ onLoginSuccess }) {
           Email
           <input
             type="email"
+            name="email"
             autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -49,6 +58,7 @@ export default function LoginPage({ onLoginSuccess }) {
           Password
           <input
             type="password"
+            name="password"
             autoComplete="current-password"
             required
             value={password}
