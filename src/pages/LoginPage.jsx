@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { request } from "../api";
+import Icon from "../components/Icon";
 export default function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
@@ -24,23 +25,11 @@ export default function LoginPage({ onLoginSuccess }) {
   }
   return (
     <main className="login">
-      <div className="login-intro">
-        <span className="brand-mark">m.</span>
-        <p className="eyebrow">MY INVESTMENT TRACKER</p>
-        <h1>
-          Your money.
-          <br />A clearer picture.
-        </h1>
-        <p>
-          Two portfolios, one place to keep track.
-          <br />
-          Built for you and your father.
-        </p>
-      </div>
       <form className="login-form" onSubmit={submit}>
-        <p className="eyebrow">YOUR PRIVATE WORKSPACE</p>
-        <h2>Welcome back</h2>
-        <p>Sign in to your investment tracker.</p>
+        <div className="login-brand">
+          <Icon name="research" size={25} />
+          <h1>Investments</h1>
+        </div>
         {error && (
           <p className="notice error" role="alert">
             {error}
@@ -51,9 +40,9 @@ export default function LoginPage({ onLoginSuccess }) {
           <input
             type="email"
             autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
         </label>
         <label>
@@ -61,19 +50,14 @@ export default function LoginPage({ onLoginSuccess }) {
           <input
             type="password"
             autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
           />
         </label>
         <button className="primary" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in →"}
+          {busy ? "Signing in…" : "Sign in"}
         </button>
-        <small>
-          One private account manages both portfolios.
-          <br />
-          Your session stays signed in for seven days.
-        </small>
       </form>
     </main>
   );

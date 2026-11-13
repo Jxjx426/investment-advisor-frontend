@@ -1,43 +1,108 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { allocationData } from "../lib/charts";
+import { money } from "../lib/tracker";
 
-const COLORS = ['#e8b04b', '#5fd9a8', '#5b9fee', '#e8697a', '#a888e8', '#4ecdc4'];
-function AllocationChart({ holdings }) {
-  const data = holdings.map((h) => ({
-    name: h.symbol,
-    value: h.currentValue,
-  }));
-
+export default function AllocationChart({
+  positions,
+  fx,
+  basis,
+  onBasisChange,
+  colors,
+}) {
+  const chart = allocationData(positions, fx, basis, colors);
   return (
-    <div className="chart-card">
-      <h4>持仓配置比例</h4>
-      <ResponsiveContainer width="100%" height={250}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={80}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+    <section className="chart-panel" aria-label="Portfolio allocation">
+      <div className="panel-heading">
+        <h2>Allocation</h2>
+        <div className="mini-switch" aria-label="Allocation basis">
+          {[
+            ["value", "Value"],
+            ["cost", "Cost"],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              aria-pressed={basis === key}
+              onClick={() => onBasisChange(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {chart.items.length ? (
+        <div className="allocation-body">
+          <div
+            className="donut-container"
+            aria-label={`Allocation by ${basis}, in MYR`}
           >
-            {data.map((entry, index) => (
-              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart accessibilityLayer>
+                <Pie
+                  data={chart.items}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="70%"
+                  outerRadius="92%"
+                  paddingAngle={3}
+                  stroke="none"
+                  startAngle={90}
+                  endAngle={-270}
+                  isAnimationActive={false}
+                >
+                  {chart.items.map((item) => (
+                    <Cell key={item.key} fill={item.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value, name) => [money(value), name]}
+                  contentStyle={{
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    color: "var(--text)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="donut-label" aria-hidden="true">
+              <strong>
+                {new Intl.NumberFormat("en-MY", {
+                  style: "currency",
+                  currency: "MYR",
+                  currencyDisplay: "narrowSymbol",
+                  notation: "compact",
+                  maximumFractionDigits: 1,
+                }).format(chart.total)}
+              </strong>
+              <span>{basis === "cost" ? "cost" : "holdings"}</span>
+            </div>
+          </div>
+          <ul className="allocation-legend">
+            {chart.items.map((item) => (
+              <li key={item.key}>
+                <span
+                  className="color-dot"
+                  style={{ background: item.color }}
+                />
+                <span>{item.name}</span>
+                <strong>{item.percent.toFixed(1)}%</strong>
+              </li>
             ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              background: '#1d1d22',
-              border: '1px solid #2c2b28',
-              borderRadius: '4px',
-              fontSize: '12px',
-            }}
-            formatter={(value) => `$${value.toFixed(2)}`}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+          </ul>
+        </div>
+      ) : (
+        <div className="chart-empty">
+          {chart.fxMissing
+            ? "USD/MYR unavailable"
+            : chart.missing
+              ? `${chart.missing} missing price${chart.missing > 1 ? "s" : ""}`
+              : "No holdings"}
+        </div>
+      )}
+      {basis === "cost" && chart.items.length > 0 && (
+        <small className="chart-unit">Cost · MYR at current FX</small>
+      )}
+    </section>
   );
 }
-
-export default AllocationChart;

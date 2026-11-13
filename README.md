@@ -10,4 +10,6 @@ Start the backend separately with `npm run demo` for sample data, or `npm start`
 
 The interface supports owner selection, open/closed holdings, fee-aware realized and unrealized P/L, MYR equity/cash estimates, cash and dividend entries, corrections and audit history, bulk entry preview and import, manual quote fallback, and history export. Research tools are preserved in source for Phase 3 reconnection.
 
+The redesigned dashboard uses a compact dark layout with an allocation donut and interactive profit/loss bars. Allocation converts all values to MYR before calculating percentages, groups matching stocks across owners, and excludes closed positions. If a current price is missing, the default view is explicitly Cost; choosing Value leaves incomplete allocation unavailable. Profit bars may show individually priced stocks while flagging unpriced ones. Both chart types use current FX for their MYR equivalents. Stock colors remain consistent across owner filters. Optional transaction fields are under More; data-quality notes are collapsed.
+
 `npm test` checks bulk parsing, export safety, owner filtering and unavailable valuations. `npm run build` produces the Vite bundle. Browser checks covered desktop and mobile layouts, login, bulk preview and correction save/recalculation. The demo login is documented in the backend guide and never accesses real records.

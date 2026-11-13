@@ -1,13 +1,25 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 :root {
-  font-family: "DM Sans", sans-serif;
-  color: #233c35;
-  background: #f5f7f4;
+  --bg: #101218;
+  --surface: #191d27;
+  --border: #2a3040;
+  --text: #e8ecf5;
+  --muted: #8b97ac;
+  --hover: #242c3d;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--text);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  font-weight: 400;
   line-height: 1.5;
+  font-weight: 400;
+  font-size: 14px;
+  color-scheme: dark;
 }
 * {
   box-sizing: border-box;
@@ -22,7 +34,6 @@ textarea {
   font: inherit;
 }
 button,
-a,
 input,
 select,
 textarea {
@@ -30,49 +41,60 @@ textarea {
 }
 button {
   cursor: pointer;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border: 1px solid #e1e4e9;
+  border-radius: 7px;
+  background: #fff;
+  font-weight: 500;
+  font-size: 13px;
+  min-height: 36px;
+}
+button:hover:not(:disabled) {
+  background: #f2f4f8;
 }
 button:disabled {
-  cursor: wait;
-  opacity: 0.5;
+  opacity: 0.45;
+  cursor: default;
 }
 button:focus-visible,
-a:focus-visible {
-  outline: 3px solid #a5b84c;
-  outline-offset: 4px;
-}
-button {
-  border: 1px solid #dce3dc;
-  border-radius: 8px;
-  background: #fff;
-  padding: 9px 15px;
-  color: #344c41;
-  font-size: 13px;
-  font-weight: 600;
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #4775ee;
+  outline-offset: 3px;
 }
 input,
 select,
 textarea {
   width: 100%;
-  padding: 11px 12px;
-  border: 1px solid #d6ded6;
-  border-radius: 7px;
+  padding: 10px 11px;
+  border: 1px solid #dfe2e8;
+  border-radius: 6px;
+  color: #262a32;
   background: #fff;
-  color: #243f34;
-  font-size: 14px;
   min-width: 0;
 }
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid #8eaa88;
+  outline: 2px solid #bdcefa;
   outline-offset: 1px;
+}
+input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #4775ee;
 }
 label {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 12px;
-  font-weight: 600;
+  color: #6c7380;
 }
 h1,
 h2,
@@ -80,56 +102,58 @@ h3,
 p {
   margin: 0;
 }
-h1,
-h2,
-h3 {
-  font-family: "Manrope", sans-serif;
-}
 h1 {
-  font-size: 35px;
+  font-size: 24px;
   line-height: 1.3;
   font-weight: 600;
-  letter-spacing: -1.4px;
+  letter-spacing: -0.7px;
 }
 h2 {
-  font-size: 20px;
-  letter-spacing: -0.6px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+}
+strong {
   font-weight: 600;
 }
 small {
   font-size: 11px;
 }
 a {
-  color: inherit;
-}
-::selection {
-  background: #e0e8ad;
-}
-button:hover:not(:disabled) {
-  border-color: #819b73;
+  color: #4775ee;
 }
 .primary {
-  background: #234c3b;
+  background: #292d35;
+  border-color: #292d35;
   color: #fff;
-  border-color: #234c3b;
-  padding: 12px 19px;
 }
 .primary:hover:not(:disabled) {
-  background: #193d2d;
-}
-strong {
-  font-weight: 600;
-}
-input[type="checkbox"] {
-  width: 15px;
-  height: 15px;
-  accent-color: #315640;
+  background: #404652;
 }
 .checkbox {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-size: 12px;
-  font-weight: 400;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.positive {
+  color: #299577 !important;
+}
+.negative {
+  color: #d5636e !important;
+}
+::selection {
+  background: #dce6ff;
 }

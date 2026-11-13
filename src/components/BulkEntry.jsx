@@ -104,10 +104,7 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
       }}
     >
       <div className="dialog-heading">
-        <div>
-          <p className="eyebrow">YOUR RECORDS, TOGETHER</p>
-          <h2>Bulk historical entry</h2>
-        </div>
+        <h2>Import</h2>
         <button
           className="icon-button"
           aria-label="Close"
@@ -117,11 +114,6 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
           ×
         </button>
       </div>
-      <p>
-        Paste CSV or spreadsheet rows with the template headers. Use{" "}
-        <strong>mine</strong> / <strong>father</strong>, ISO dates (YYYY-MM-DD),
-        positive prices and fees, and Bursa codes such as <strong>1155</strong>.
-      </p>
       {error && (
         <p className="notice error" role="alert">
           {error}
@@ -129,13 +121,9 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
       )}
       {!preview ? (
         <>
-          <div className="section-actions">
-            <button onClick={() => setSource(BULK_TEMPLATE)}>
-              Load example template
-            </button>
-            <button onClick={() => fileInput.current.click()}>
-              Load local file
-            </button>
+          <div className="bulk-tools">
+            <button onClick={() => setSource(BULK_TEMPLATE)}>Template</button>
+            <button onClick={() => fileInput.current.click()}>Upload</button>
             <input
               hidden
               ref={fileInput}
@@ -143,9 +131,10 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
               accept=".json,.csv,.tsv,.txt"
               onChange={loadFile}
             />
+            <small>CSV / TSV / JSON · 500 rows max</small>
           </div>
           <label className="paste-label">
-            Transaction data
+            Data
             <textarea
               rows="10"
               spellCheck="false"
@@ -154,20 +143,20 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
               onChange={(e) => setSource(e.target.value)}
             />
           </label>
-          <p className="helper">
-            Types: BUY, SELL, DEPOSIT, WITHDRAWAL, DIVIDEND. Amount is for cash
-            entries and dividends; quantity and price are for trades. Fees use
-            the entry's currency. Leave unavailable actual FX blank. Maximum 500
-            rows. Example rows are illustrative. Local files may be CSV, TSV or
-            a reviewed JSON draft.
-          </p>
+          <details className="column-help">
+            <summary>Format</summary>
+            <p>
+              Owners: mine / father. Dates: YYYY-MM-DD. Types: BUY, SELL,
+              DEPOSIT, WITHDRAWAL, DIVIDEND. Positive prices and fees. Actual FX
+              optional. Template contains sample rows.
+            </p>
+          </details>
         </>
       ) : (
         <>
-          <div className="notice">
-            <strong>{preview.count} rows validated.</strong> All rows are saved
-            together. Review owners and amounts before importing.
-          </div>
+          <p className="preview-count">
+            {preview.count} entries · ready to import
+          </p>
           {preview.duplicate_rows.length > 0 && (
             <label className="checkbox notice error">
               <input
@@ -175,18 +164,17 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
                 checked={duplicates}
                 onChange={(e) => setDuplicates(e.target.checked)}
               />
-              Rows {preview.duplicate_rows.join(", ")} may be duplicates. I
-              checked these are separate fills and want to import them.
+              Rows {preview.duplicate_rows.join(", ")}: allow duplicate fills
             </label>
           )}
           <div className="table-wrap preview-table">
             <table>
               <thead>
                 <tr>
-                  <th>Owner / date</th>
-                  <th>Type / stock</th>
+                  <th>Owner</th>
+                  <th>Stock</th>
                   <th>Shares</th>
-                  <th>Price / amount</th>
+                  <th>Amount</th>
                   <th>Fee</th>
                 </tr>
               </thead>
@@ -228,7 +216,7 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
               : onClose
           }
         >
-          {preview ? "Back to data" : "Cancel"}
+          {preview ? "Back" : "Cancel"}
         </button>
         <button
           className="primary"
@@ -239,11 +227,7 @@ export default function BulkEntry({ owners, onClose, onSaved }) {
           }
           onClick={preview ? save : review}
         >
-          {busy
-            ? "Working…"
-            : preview
-              ? `Import ${preview.count} records`
-              : "Review entries →"}
+          {busy ? "Working…" : preview ? `Import ${preview.count}` : "Review"}
         </button>
       </div>
     </dialog>

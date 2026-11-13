@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { request } from "../api";
 import { kinds, today } from "../lib/tracker";
+import Icon from "./Icon";
 export default function TransactionEditor({
   owners,
   ownerKey,
@@ -13,7 +14,8 @@ export default function TransactionEditor({
     () =>
       initial || {
         owner_id:
-          owners.find((o) => o.owner_key === ownerKey)?.id || owners[0].id,
+          owners.find((owner) => owner.owner_key === ownerKey)?.id ||
+          owners[0].id,
         kind: defaultKind,
         occurred_on: today(),
         market: "US",
@@ -34,9 +36,9 @@ export default function TransactionEditor({
     [allowDuplicates, setAllowDuplicates] = useState(false);
   const dialog = useRef(null);
   useEffect(() => {
-    const el = dialog.current;
-    el.showModal();
-    return () => el.close();
+    const element = dialog.current;
+    element.showModal();
+    return () => element.close();
   }, []);
   const change = (key, value) => setForm((old) => ({ ...old, [key]: value }));
   const trade = ["BUY", "SELL"].includes(form.kind),
@@ -85,19 +87,14 @@ export default function TransactionEditor({
       }}
     >
       <div className="dialog-heading">
-        <div>
-          <p className="eyebrow">
-            {initial ? "CORRECT A RECORD" : "BUILD YOUR HISTORY"}
-          </p>
-          <h2>{initial ? "Edit transaction" : "Add transaction"}</h2>
-        </div>
+        <h2>{initial ? "Edit" : "Add transaction"}</h2>
         <button
           className="icon-button"
-          onClick={onClose}
-          disabled={busy}
           aria-label="Close"
+          disabled={busy}
+          onClick={onClose}
         >
-          ×
+          <Icon name="close" />
         </button>
       </div>
       <form onSubmit={save}>
@@ -111,9 +108,9 @@ export default function TransactionEditor({
             <input
               type="checkbox"
               checked={allowDuplicates}
-              onChange={(e) => setAllowDuplicates(e.target.checked)}
+              onChange={(event) => setAllowDuplicates(event.target.checked)}
             />
-            This is a separate fill. Allow the duplicate details.
+            Separate fill · allow duplicate
           </label>
         )}
         <div className="form-grid">
@@ -121,11 +118,13 @@ export default function TransactionEditor({
             Owner
             <select
               value={form.owner_id}
-              onChange={(e) => change("owner_id", Number(e.target.value))}
+              onChange={(event) =>
+                change("owner_id", Number(event.target.value))
+              }
             >
-              {owners.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
+              {owners.map((owner) => (
+                <option key={owner.id} value={owner.id}>
+                  {owner.owner_key === "father" ? "Dad" : "Mine"}
                 </option>
               ))}
             </select>
@@ -134,12 +133,14 @@ export default function TransactionEditor({
             Type
             <select
               value={form.kind}
-              onChange={(e) =>
+              onChange={(event) =>
                 setForm((old) => ({
                   ...old,
-                  kind: e.target.value,
+                  kind: event.target.value,
                   market: old.market || "US",
-                  currency: ["BUY", "SELL", "DIVIDEND"].includes(e.target.value)
+                  currency: ["BUY", "SELL", "DIVIDEND"].includes(
+                    event.target.value,
+                  )
                     ? old.market === "MY"
                       ? "MYR"
                       : "USD"
@@ -147,9 +148,9 @@ export default function TransactionEditor({
                 }))
               }
             >
-              {Object.entries(kinds).map(([key, name]) => (
+              {Object.entries(kinds).map(([key, label]) => (
                 <option key={key} value={key}>
-                  {name}
+                  {label}
                 </option>
               ))}
             </select>
@@ -161,59 +162,46 @@ export default function TransactionEditor({
               required
               max={today()}
               value={form.occurred_on}
-              onChange={(e) => change("occurred_on", e.target.value)}
+              onChange={(event) => change("occurred_on", event.target.value)}
             />
           </label>
-          <label>
-            Same-day order
-            <input
-              type="number"
-              min="0"
-              max="1000000"
-              step="1"
-              required
-              value={form.sequence}
-              onChange={(e) => change("sequence", e.target.value)}
-            />
-          </label>
-          {security && (
+          {security ? (
             <>
               <label>
                 Market
                 <select
                   value={form.market || "US"}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setForm((old) => ({
                       ...old,
-                      market: e.target.value,
-                      currency: e.target.value === "US" ? "USD" : "MYR",
+                      market: event.target.value,
+                      currency: event.target.value === "US" ? "USD" : "MYR",
                     }))
                   }
                 >
-                  <option value="US">United States</option>
-                  <option value="MY">Malaysia · Bursa</option>
+                  <option value="US">US · USD</option>
+                  <option value="MY">Malaysia · MYR</option>
                 </select>
               </label>
-              <label>
-                Stock ticker
+              <label className="full">
+                Stock
                 <input
                   required
-                  placeholder={form.market === "MY" ? "1155 (Maybank)" : "AAPL"}
+                  placeholder={form.market === "MY" ? "1155" : "AAPL"}
                   value={form.symbol || ""}
-                  maxLength="20"
-                  onChange={(e) =>
-                    change("symbol", e.target.value.toUpperCase())
+                  maxLength={20}
+                  onChange={(event) =>
+                    change("symbol", event.target.value.toUpperCase())
                   }
                 />
               </label>
             </>
-          )}
-          {!security && (
+          ) : (
             <label>
               Currency
               <select
                 value={form.currency}
-                onChange={(e) => change("currency", e.target.value)}
+                onChange={(event) => change("currency", event.target.value)}
               >
                 <option>MYR</option>
                 <option>USD</option>
@@ -230,18 +218,18 @@ export default function TransactionEditor({
                   step="0.00000001"
                   required
                   value={form.quantity}
-                  onChange={(e) => change("quantity", e.target.value)}
+                  onChange={(event) => change("quantity", event.target.value)}
                 />
               </label>
               <label>
-                Price per share ({form.currency})
+                Price ({form.currency})
                 <input
                   type="number"
                   min="0.00000001"
                   step="0.00000001"
                   required
                   value={form.price}
-                  onChange={(e) => change("price", e.target.value)}
+                  onChange={(event) => change("price", event.target.value)}
                 />
               </label>
             </>
@@ -255,75 +243,76 @@ export default function TransactionEditor({
                 step="0.00000001"
                 required
                 value={form.amount}
-                onChange={(e) => change("amount", e.target.value)}
+                onChange={(event) => change("amount", event.target.value)}
               />
             </label>
           )}
           <label>
-            {form.kind === "DIVIDEND"
-              ? "Withholding / fees"
-              : "Exact total fee"}{" "}
-            ({form.currency})
+            {form.kind === "DIVIDEND" ? "Tax / fees" : "Fee"} ({form.currency})
             <input
               type="number"
               min="0"
               step="0.00000001"
               required
               value={form.fee}
-              onChange={(e) => change("fee", e.target.value)}
-            />
-          </label>
-          {form.currency === "USD" && (
-            <label>
-              Actual FX, if known <span className="muted">optional</span>
-              <input
-                type="number"
-                min="0.00000001"
-                step="0.00000001"
-                placeholder="MYR per 1 USD"
-                value={form.fx_rate ?? ""}
-                onChange={(e) => change("fx_rate", e.target.value)}
-              />
-            </label>
-          )}
-          <label className="full">
-            Notes
-            <input
-              maxLength="1000"
-              value={form.notes}
-              onChange={(e) => change("notes", e.target.value)}
-              placeholder="Optional reference or broker note"
+              onChange={(event) => change("fee", event.target.value)}
             />
           </label>
         </div>
-        <p className="helper">
-          {trade
-            ? "Enter positive shares, prices and fees. Buy fees enter cost; sell fees reduce proceeds."
-            : form.kind === "DIVIDEND"
-              ? "Dividends increase cash without changing your shares."
-              : "Deposits and withdrawals change cash and contributions, never trading profit."}{" "}
-          Same-day entries run by order, then entry time.
-        </p>
+        <details className="more-fields">
+          <summary>More</summary>
+          <div className="form-grid">
+            <label>
+              Same-day order
+              <input
+                type="number"
+                min="0"
+                max="1000000"
+                step="1"
+                value={form.sequence}
+                onChange={(event) => change("sequence", event.target.value)}
+              />
+            </label>
+            {form.currency === "USD" && (
+              <label>
+                Actual FX
+                <input
+                  type="number"
+                  min="0.00000001"
+                  step="0.00000001"
+                  placeholder="MYR per USD"
+                  value={form.fx_rate ?? ""}
+                  onChange={(event) => change("fx_rate", event.target.value)}
+                />
+              </label>
+            )}
+            <label className="full">
+              Notes
+              <input
+                maxLength={1000}
+                value={form.notes}
+                onChange={(event) => change("notes", event.target.value)}
+              />
+            </label>
+          </div>
+        </details>
         {deleting && (
           <div className="notice error">
-            <p>
-              Delete this record? Later balances will be recalculated. The
-              correction history is kept.
-            </p>
+            <span>Delete this entry?</span>
             <button
               type="button"
               className="danger"
               disabled={busy}
               onClick={remove}
             >
-              Confirm delete
-            </button>{" "}
+              Delete
+            </button>
             <button
               type="button"
               disabled={busy}
               onClick={() => setDeleting(false)}
             >
-              Keep record
+              Keep
             </button>
           </div>
         )}
@@ -335,18 +324,14 @@ export default function TransactionEditor({
               disabled={busy}
               onClick={() => setDeleting(true)}
             >
-              Delete record
+              Delete
             </button>
           )}
-          <button type="button" onClick={onClose} disabled={busy}>
+          <button type="button" disabled={busy} onClick={onClose}>
             Cancel
           </button>
           <button className="primary" disabled={busy}>
-            {busy
-              ? "Saving…"
-              : initial
-                ? "Save correction"
-                : "Save transaction"}
+            {busy ? "Saving…" : "Save"}
           </button>
         </div>
       </form>

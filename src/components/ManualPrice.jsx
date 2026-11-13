@@ -42,7 +42,7 @@ export default function ManualPrice({ position, onClose, onSaved }) {
       }}
     >
       <div className="dialog-heading">
-        <h2>{position.symbol} · manual price</h2>
+        <h2>{position.symbol} · price</h2>
         <button
           className="icon-button"
           onClick={onClose}
@@ -52,11 +52,6 @@ export default function ManualPrice({ position, onClose, onSaved }) {
           ×
         </button>
       </div>
-      <p className="helper">
-        Enter a price from your broker when automatic data is unavailable. It
-        stays labelled as manual and is replaced by a newer valid automatic
-        quote.
-      </p>
       <form onSubmit={save}>
         {error && (
           <p role="alert" className="notice error">
@@ -76,7 +71,7 @@ export default function ManualPrice({ position, onClose, onSaved }) {
             />
           </label>
           <label>
-            Quote time (UTC)
+            Time (UTC)
             <input
               required
               type="datetime-local"
@@ -90,7 +85,7 @@ export default function ManualPrice({ position, onClose, onSaved }) {
             Cancel
           </button>
           <button className="primary" disabled={busy}>
-            {busy ? "Saving…" : "Save manual price"}
+            {busy ? "Saving…" : "Save"}
           </button>
         </div>
       </form>
